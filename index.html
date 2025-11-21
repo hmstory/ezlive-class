@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ezlive - 연결 버전</title>
+    <title>ezlive - 최종 완성</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
@@ -11,7 +11,6 @@
         .page { display: none; }
         .page.active { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; }
         
-        /* 비디오 그리드: 2명이면 1:1, 늘어나면 바둑판 */
         #video-grid { 
             display: grid; 
             grid-template-columns: repeat(auto-fit, minmax(45%, 1fr)); 
@@ -36,14 +35,15 @@
             width: 100%; 
             height: 100%; 
             object-fit: cover; 
+            /* 중요: 재생 버튼이 보이도록 설정 */
+            z-index: 10;
         }
         
-        /* 내 비디오 반전 (거울모드) */
         .my-video { transform: scaleX(-1); }
 
         .badge {
             display: inline-block;
-            background-color: #22c55e;
+            background-color: #7c3aed; /* 보라색 */
             color: white;
             padding: 4px 12px;
             border-radius: 9999px;
@@ -59,7 +59,7 @@
     <div id="page-home" class="page active">
         <div class="bg-white p-8 rounded-2xl shadow-xl text-center max-w-sm w-full">
             <h1 class="text-5xl font-bold text-blue-600 mb-2">ezlive</h1>
-            <span class="badge">✅ 버전 3 (연결 가능)</span>
+            <span class="badge">🚀 버전 4 (최종 완성)</span>
             
             <div class="space-y-4 mt-6">
                 <button onclick="goPage('create')" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-xl font-bold text-lg transition shadow-md">
@@ -69,7 +69,7 @@
                     👨‍🎓 학생용 입장하기
                 </button>
             </div>
-            <p class="mt-6 text-gray-400 text-sm">새로고침(F5) 후 초록색 배지를 확인하세요!</p>
+            <p class="mt-6 text-gray-400 text-sm">새로고침(F5) 후 보라색 배지를 확인하세요!</p>
         </div>
     </div>
 
@@ -104,7 +104,6 @@
     </div>
 
     <script>
-        // --- 페이지 이동 로직 ---
         const pages = ['home', 'create', 'join', 'room'];
         function goPage(target) {
             pages.forEach(p => {
@@ -116,25 +115,21 @@
             t.classList.remove('hidden');
         }
 
-        // --- 화상 통화 핵심 로직 ---
         let peer;
         let myStream;
 
-        // 1. 공통: 카메라 켜기
         async function initMedia() {
             try {
-                // 내 얼굴 나오게 하기
                 myStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
                 addVideo(myStream, true); 
                 goPage('room');
                 return true;
             } catch(e) {
-                alert("카메라 권한을 허용해주세요! (주소창 자물쇠 클릭)");
+                alert("카메라 권한을 허용해주세요!");
                 return false;
             }
         }
 
-        // 2. 교사: 방 만들기 (전화 받기 대기)
         async function startHosting() {
             const roomName = document.getElementById('create-name').value.trim();
             if(!roomName) return alert("방 이름을 입력하세요!");
@@ -142,67 +137,65 @@
             if(await initMedia()) {
                 document.getElementById('display-room-name').innerText = roomName;
                 document.getElementById('status-msg').innerText = "학생을 기다리는 중...";
-                
-                // 교사는 방 이름을 ID로 사용
                 peer = new Peer(roomName);
-                
-                // 학생에게 전화가 오면 받음
                 peer.on('call', call => {
-                    call.answer(myStream); // 내 영상 보내주기
+                    call.answer(myStream);
                     call.on('stream', studentStream => {
-                        addVideo(studentStream, false); // 학생 영상 화면에 띄우기
+                        addVideo(studentStream, false);
                         document.getElementById('status-msg').innerText = "학생이 입장했습니다!";
                     });
                 });
             }
         }
 
-        // 3. 학생: 방 들어가기 (전화 걸기)
         async function joinSession() {
             const roomName = document.getElementById('join-name').value.trim();
             if(!roomName) return alert("방 이름을 입력하세요!");
 
             if(await initMedia()) {
                 document.getElementById('display-room-name').innerText = roomName;
-                document.getElementById('status-msg').innerText = "선생님에게 연결 중...";
-
-                // 학생은 랜덤 ID 사용
+                document.getElementById('status-msg').innerText = "연결 중...";
                 peer = new Peer();
-                
                 peer.on('open', () => {
-                    // 선생님(roomName)에게 전화 걸기
                     const call = peer.call(roomName, myStream);
-                    
                     call.on('stream', teacherStream => {
-                        addVideo(teacherStream, false); // 선생님 영상 띄우기
+                        addVideo(teacherStream, false);
                         document.getElementById('status-msg').innerText = "연결 성공!";
                     });
                 });
-                
                 peer.on('error', err => {
-                    alert("선생님이 아직 방을 안 만들었거나 이름이 틀렸어요!");
+                    alert("방을 찾을 수 없습니다.");
                     location.reload();
                 });
             }
         }
 
-        // 4. 화면에 비디오 추가하는 함수
         function addVideo(stream, isMe) {
             const wrapper = document.createElement('div');
             wrapper.className = 'video-container';
             
             const video = document.createElement('video');
             video.srcObject = stream;
+            
+            // [중요] 자동 재생 설정
             video.autoplay = true;
-            video.playsInline = true;
+            video.playsInline = true; 
+            
+            // [핵심] 검은 화면 방지용 컨트롤러 표시
+            video.controls = true; 
             
             if(isMe) {
-                video.muted = true; // 내 소리는 안 들리게 (하울링 방지)
-                video.classList.add('my-video'); // 거울 모드
+                video.muted = true;
+                video.classList.add('my-video');
+                // 내 비디오는 컨트롤 바 숨김 (거슬리니까)
+                video.controls = false; 
             }
             
             wrapper.appendChild(video);
             document.getElementById('video-grid').appendChild(wrapper);
+            
+            // 강제 재생 시도
+            video.play().catch(e => console.log("자동 재생 막힘: 사용자가 재생 버튼 눌러야 함"));
         }
     </script>
 </body>
