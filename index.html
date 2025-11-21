@@ -3,24 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ezlive - UI 리마스터</title>
+    <title>ezlive - 보안 강화판</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        /* 폰트 및 기본 설정 */
         @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
         body { font-family: "Pretendard", sans-serif; background-color: #0f172a; color: white; overflow: hidden; touch-action: none; }
         
-        /* 페이지 전환 효과 */
         .page { display: none; width: 100%; height: 100vh; opacity: 0; transition: opacity 0.3s ease-in-out; }
         .page.active { display: flex; flex-direction: column; opacity: 1; }
 
-        /* 비디오 그리드 (1:1 최적화) */
         #video-grid {
             flex: 1;
             display: grid;
-            grid-template-columns: 1fr; /* 모바일 기본: 세로 배치 */
+            grid-template-columns: 1fr; 
             grid-template-rows: 1fr 1fr;
             gap: 12px;
             padding: 16px;
@@ -30,129 +27,72 @@
             box-sizing: border-box;
         }
 
-        /* 가로 모드나 PC에서는 좌우 배치 */
         @media (min-width: 768px) {
-            #video-grid {
-                grid-template-columns: 1fr 1fr;
-                grid-template-rows: 1fr;
-            }
+            #video-grid { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr; }
         }
 
-        /* 비디오 컨테이너 디자인 */
         .video-card {
             position: relative;
-            width: 100%;
-            height: 100%;
+            width: 100%; height: 100%;
             background: #1e293b;
             border-radius: 24px;
             overflow: hidden;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             border: 1px solid rgba(255,255,255,0.1);
-            transition: all 0.3s ease;
         }
 
-        video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            background-color: #000;
-        }
-
+        video { width: 100%; height: 100%; object-fit: cover; background-color: #000; }
         .my-video { transform: scaleX(-1); }
 
-        /* 네임 태그 */
         .name-tag {
-            position: absolute;
-            bottom: 16px;
-            left: 16px;
-            background: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(4px);
-            padding: 6px 14px;
-            border-radius: 12px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 6px;
+            position: absolute; bottom: 16px; left: 16px;
+            background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px);
+            padding: 6px 14px; border-radius: 12px; font-size: 0.9rem; font-weight: 600;
             z-index: 10;
         }
 
-        /* 상태 오버레이 (로딩중 등) */
-        .status-overlay {
-            position: absolute;
-            inset: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            background: rgba(30, 41, 59, 0.9);
-            z-index: 5;
-            text-align: center;
-        }
-
-        /* 하단 컨트롤 바 (절대 안 사라짐) */
         .control-bar {
-            position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(15, 23, 42, 0.9);
-            backdrop-filter: blur(10px);
-            padding: 12px 24px;
-            border-radius: 100px;
-            display: flex;
-            gap: 20px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-            border: 1px solid rgba(255,255,255,0.1);
-            z-index: 9999; /* 최상위 보장 */
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+            background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(10px);
+            padding: 12px 24px; border-radius: 100px;
+            display: flex; gap: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1);
+            z-index: 9999;
         }
 
         .control-btn {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            border: none;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.2rem;
-            transition: transform 0.2s;
+            width: 50px; height: 50px; border-radius: 50%; border: none;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            font-size: 1.2rem; transition: transform 0.2s;
         }
         .control-btn:active { transform: scale(0.9); }
         .btn-end { background-color: #ef4444; color: white; }
         .btn-copy { background-color: #334155; color: white; }
 
-        /* 버전 배지 */
         .badge {
-            background: linear-gradient(135deg, #6366f1, #a855f7);
-            color: white;
-            padding: 6px 16px;
-            border-radius: 100px;
-            font-size: 0.85rem;
-            font-weight: bold;
-            box-shadow: 0 4px 12px rgba(168, 85, 247, 0.4);
-            margin-bottom: 24px;
-            display: inline-block;
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white; padding: 6px 16px; border-radius: 100px;
+            font-size: 0.85rem; font-weight: bold;
+            box-shadow: 0 4px 12px rgba(217, 119, 6, 0.4);
+            margin-bottom: 24px; display: inline-block;
         }
 
-        /* 인풋 박스 스타일 */
         .glass-input {
             background: rgba(255, 255, 255, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.2);
-            color: white;
-            border-radius: 16px;
-            padding: 16px;
-            width: 100%;
-            font-size: 1.1rem;
-            text-align: center;
+            color: white; border-radius: 16px; padding: 14px;
+            width: 100%; font-size: 1rem; text-align: center; margin-bottom: 12px;
             transition: all 0.3s;
         }
-        .glass-input:focus {
-            outline: none;
-            background: rgba(255, 255, 255, 0.15);
-            border-color: #a855f7;
+        .glass-input:focus { outline: none; background: rgba(255, 255, 255, 0.15); border-color: #f59e0b; }
+        
+        .tap-guide {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: rgba(220, 38, 38, 0.9); padding: 15px 25px; border-radius: 30px;
+            text-align: center; z-index: 50; cursor: pointer;
+            border: 2px solid white; animation: bounce 1.5s infinite;
         }
+        @keyframes bounce { 0%, 100% { transform: translate(-50%, -50%) scale(1); } 50% { transform: translate(-50%, -50%) scale(1.1); } }
     </style>
 </head>
 <body>
@@ -160,39 +100,58 @@
     <!-- 1. 홈 화면 -->
     <div id="page-home" class="page active items-center justify-center bg-gradient-to-b from-slate-900 to-slate-800">
         <div class="text-center p-8 w-full max-w-md">
-            <div class="text-6xl mb-4">🛸</div>
-            <h1 class="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500 mb-4">ezlive</h1>
-            <div class="badge">✨ Ver. 14 Design Upgrade</div>
+            <div class="text-6xl mb-4">🔒</div>
+            <h1 class="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500 mb-4">ezlive</h1>
+            <div class="badge">🛡️ Ver. 15 Security Pack</div>
             
             <div class="grid gap-4 mt-8">
                 <button onclick="goPage('create')" class="bg-slate-800 hover:bg-slate-700 border border-slate-600 text-white py-5 rounded-2xl font-bold text-lg shadow-lg transition flex items-center justify-center gap-3">
-                    <i class="fas fa-chalkboard-teacher text-blue-400"></i> 선생님 (방 만들기)
+                    <i class="fas fa-key text-amber-400"></i> 선생님 (방 만들기)
                 </button>
                 <button onclick="goPage('join')" class="bg-slate-800 hover:bg-slate-700 border border-slate-600 text-white py-5 rounded-2xl font-bold text-lg shadow-lg transition flex items-center justify-center gap-3">
-                    <i class="fas fa-user-graduate text-green-400"></i> 학생 (입장하기)
+                    <i class="fas fa-door-open text-green-400"></i> 학생 (입장하기)
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- 2. 방 만들기 -->
+    <!-- 2. 방 만들기 (보안 설정) -->
     <div id="page-create" class="page items-center justify-center bg-slate-900">
         <div class="w-full max-w-sm p-6 text-center">
-            <h2 class="text-2xl font-bold mb-8">강의실 이름을 정해주세요</h2>
-            <input type="text" id="create-name" placeholder="예: math class" class="glass-input mb-6">
-            <button onclick="startHosting()" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-2xl font-bold text-lg shadow-lg shadow-blue-900/50 transition">
-                방송 시작하기 🚀
+            <h2 class="text-2xl font-bold mb-6">강의실 설정</h2>
+            
+            <div class="space-y-2 text-left mb-6">
+                <label class="text-xs text-slate-400 ml-2">1. 선생님 인증 (a123456!)</label>
+                <input type="password" id="teacher-auth" placeholder="선생님 비밀번호" class="glass-input">
+                
+                <label class="text-xs text-slate-400 ml-2">2. 강의실 이름 (영어)</label>
+                <input type="text" id="create-name" placeholder="예: math" class="glass-input">
+                
+                <label class="text-xs text-slate-400 ml-2">3. 학생용 비밀번호 설정</label>
+                <input type="text" id="create-pass" placeholder="학생에게 알려줄 비번" class="glass-input">
+            </div>
+
+            <button onclick="startHosting()" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-2xl font-bold text-lg shadow-lg transition">
+                강의실 열기 🚀
             </button>
             <button onclick="goPage('home')" class="mt-6 text-slate-400 text-sm hover:text-white">뒤로가기</button>
         </div>
     </div>
 
-    <!-- 3. 입장하기 -->
+    <!-- 3. 입장하기 (비번 입력) -->
     <div id="page-join" class="page items-center justify-center bg-slate-900">
         <div class="w-full max-w-sm p-6 text-center">
-            <h2 class="text-2xl font-bold mb-8">어떤 강의실로 갈까요?</h2>
-            <input type="text" id="join-name" placeholder="강의실 이름 입력" class="glass-input mb-6">
-            <button onclick="joinSession()" class="w-full bg-green-600 hover:bg-green-500 text-white py-4 rounded-2xl font-bold text-lg shadow-lg shadow-green-900/50 transition">
+            <h2 class="text-2xl font-bold mb-6">강의실 입장</h2>
+            
+            <div class="space-y-2 text-left mb-6">
+                <label class="text-xs text-slate-400 ml-2">강의실 이름</label>
+                <input type="text" id="join-name" placeholder="선생님이 알려준 이름" class="glass-input">
+                
+                <label class="text-xs text-slate-400 ml-2">비밀번호</label>
+                <input type="password" id="join-pass" placeholder="선생님이 알려준 비번" class="glass-input">
+            </div>
+
+            <button onclick="joinSession()" class="w-full bg-green-600 hover:bg-green-500 text-white py-4 rounded-2xl font-bold text-lg shadow-lg transition">
                 입장하기 🏃
             </button>
             <button onclick="goPage('home')" class="mt-6 text-slate-400 text-sm hover:text-white">뒤로가기</button>
@@ -200,8 +159,7 @@
     </div>
 
     <!-- 4. 화상 회의실 (메인) -->
-    <div id="page-room" class="page bg-slate-900">
-        <!-- 상단 정보 바 -->
+    <div id="page-room" class="page bg-slate-900" onclick="forcePlay()">
         <div class="px-6 py-4 flex justify-between items-center bg-slate-900/50 backdrop-blur-sm z-50">
             <div class="flex items-center gap-2">
                 <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
@@ -209,12 +167,10 @@
             </div>
         </div>
 
-        <!-- 비디오 영역 -->
         <div id="video-grid"></div>
 
-        <!-- 하단 컨트롤 바 (절대 위치 고정) -->
         <div class="control-bar">
-            <button onclick="copyRoomInfo()" class="control-btn btn-copy" title="초대 링크 복사">
+            <button onclick="copyRoomInfo()" class="control-btn btn-copy" title="정보 복사">
                 <i class="fas fa-link"></i>
             </button>
             <button onclick="location.reload()" class="control-btn btn-end" title="종료">
@@ -224,7 +180,15 @@
     </div>
 
     <script>
-        // UI 및 네비게이션 로직
+        // 강제 재생 (v12 유지)
+        document.body.addEventListener('click', forcePlay);
+        document.body.addEventListener('touchstart', forcePlay);
+        function forcePlay() {
+            document.querySelectorAll('video').forEach(v => {
+                if (v.paused) v.play().catch(()=>{});
+            });
+        }
+
         const pages = ['home', 'create', 'join', 'room'];
         function goPage(target) {
             pages.forEach(p => document.getElementById(`page-${p}`).classList.remove('active'));
@@ -233,14 +197,15 @@
 
         function copyRoomInfo() {
             const name = document.getElementById('display-room-name').innerText;
-            navigator.clipboard.writeText(name).then(() => alert(`방 이름 '${name}' 복사 완료!`));
+            // 비밀번호는 보안상 복사하지 않거나, 필요하면 추가 가능
+            navigator.clipboard.writeText(`강의실: ${name}`).then(() => alert("복사되었습니다!"));
         }
 
-        // WebRTC 핵심 로직 (v13 기반 안정성 유지)
         let peer;
         let myStream;
+        let roomPassword = ""; // 교사가 설정한 비번 저장용
+
         const peerConfig = {
-            debug: 1,
             sdpSemantics: 'unified-plan',
             config: {
                 'iceServers': [
@@ -260,20 +225,38 @@
                 goPage('room');
                 return true;
             } catch(e) {
-                alert("카메라/마이크 권한이 필요합니다.");
+                alert("카메라/마이크 권한 필수!");
                 return false;
             }
         }
 
         async function startHosting() {
+            const auth = document.getElementById('teacher-auth').value;
             const name = document.getElementById('create-name').value.trim();
-            if(!name) return;
+            const pass = document.getElementById('create-pass').value.trim();
+
+            if(auth !== 'a123456!') return alert("선생님 인증 비밀번호가 틀렸습니다.");
+            if(!name || !pass) return alert("모든 정보를 입력해주세요.");
+
             if(await initMedia()) {
                 document.getElementById('display-room-name').innerText = name;
+                roomPassword = pass; // 비번 저장
+
                 peer = new Peer(name, peerConfig);
+                
                 peer.on('call', call => {
-                    call.answer(myStream);
-                    handleCall(call, false);
+                    // [보안 핵심] 걸려온 전화의 메타데이터(비번) 확인
+                    const studentPass = call.metadata && call.metadata.password;
+                    
+                    if(studentPass === roomPassword) {
+                        // 비번 맞음 -> 연결 수락
+                        call.answer(myStream);
+                        handleCall(call);
+                    } else {
+                        // 비번 틀림 -> 연결 무시 (또는 끊기)
+                        console.log("비밀번호 불일치 접근 차단");
+                        // PeerJS 버그로 close()가 안 먹힐 수 있어 그냥 answer 안 함.
+                    }
                 });
                 peer.on('error', e => alert("오류: " + e.type));
             }
@@ -281,28 +264,34 @@
 
         async function joinSession() {
             const name = document.getElementById('join-name').value.trim();
-            if(!name) return;
+            const pass = document.getElementById('join-pass').value.trim();
+
+            if(!name || !pass) return alert("강의실 이름과 비밀번호를 입력하세요.");
+
             if(await initMedia()) {
                 document.getElementById('display-room-name').innerText = name;
                 peer = new Peer(null, peerConfig);
                 peer.on('open', () => {
-                    const call = peer.call(name, myStream);
-                    handleCall(call, true);
+                    // [보안 핵심] 전화 걸 때 비밀번호를 봉투(metadata)에 담아 보냄
+                    const call = peer.call(name, myStream, {
+                        metadata: { password: pass }
+                    });
+                    handleCall(call);
                 });
-                peer.on('error', () => { alert("방을 찾을 수 없습니다."); goPage('home'); });
+                peer.on('error', () => { alert("방을 찾을 수 없거나 비밀번호가 틀려서 거절되었습니다."); goPage('home'); });
             }
         }
 
-        function handleCall(call, isInitiator) {
+        function handleCall(call) {
             call.on('stream', stream => addVideo(stream, false, 'peer-video'));
             call.on('close', () => {
                 document.getElementById('peer-video')?.remove();
-                alert("상대방이 나갔습니다.");
+                alert("연결이 종료되었습니다.");
             });
         }
 
         function addVideo(stream, isMe, id) {
-            document.getElementById(id)?.remove(); // 중복 방지
+            document.getElementById(id)?.remove();
 
             const card = document.createElement('div');
             card.className = 'video-card';
@@ -314,24 +303,19 @@
             video.playsInline = true;
             video.setAttribute('webkit-playsinline', '');
             
-            // 네임 태그
             const tag = document.createElement('div');
             tag.className = 'name-tag';
             tag.innerHTML = isMe ? '<i class="fas fa-user"></i> 나' : '<i class="fas fa-user-friends"></i> 상대방';
             
-            // 상태 오버레이 (상대방 로딩 시)
             if(!isMe) {
-                const overlay = document.createElement('div');
-                overlay.className = 'status-overlay';
-                overlay.innerHTML = '<i class="fas fa-spinner fa-spin text-3xl text-blue-500 mb-2"></i><span>연결 중...</span>';
-                card.appendChild(overlay);
-                
-                video.onloadedmetadata = () => {
-                    video.play();
-                    overlay.remove();
-                };
-                // 터치 재생 트리거
-                card.onclick = () => video.play();
+                video.muted = false; // 상대방 소리 켜기
+                const guide = document.createElement('div');
+                guide.className = 'tap-guide';
+                guide.innerText = "👇 안 보이면 터치!";
+                guide.onclick = (e) => { e.stopPropagation(); video.play().then(()=>guide.remove()); };
+                card.appendChild(guide);
+                // 자동 재생 시도
+                video.play().catch(() => console.log("터치 대기"));
             } else {
                 video.muted = true;
                 video.classList.add('my-video');
