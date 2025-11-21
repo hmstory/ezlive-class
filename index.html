@@ -3,136 +3,206 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ezlive - P2P 화상 강의</title>
+    <title>ezlive - 연결 버전</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
-        body { font-family: "Inter", "Pretendard", sans-serif; }
+        body { font-family: "Pretendard", sans-serif; background-color: #f3f4f6; }
         .page { display: none; }
-        .page.active { display: flex; } /* flex로 변경하여 중앙 정렬 유지 */
-        #video-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem; width: 100%; }
-        .video-container { position: relative; width: 100%; padding-bottom: 75%; background: #000; border-radius: 8px; overflow: hidden; }
-        video { position: absolute; width: 100%; height: 100%; object-fit: cover; }
+        .page.active { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; }
+        
+        /* 비디오 그리드: 2명이면 1:1, 늘어나면 바둑판 */
+        #video-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(45%, 1fr)); 
+            gap: 10px; 
+            width: 100%; 
+            max-width: 1200px; 
+            height: 80vh; 
+            padding: 10px;
+        }
+        
+        .video-container { 
+            position: relative; 
+            width: 100%; 
+            height: 100%; 
+            background: #000; 
+            border-radius: 12px; 
+            overflow: hidden; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        
+        video { 
+            width: 100%; 
+            height: 100%; 
+            object-fit: cover; 
+        }
+        
+        /* 내 비디오 반전 (거울모드) */
+        .my-video { transform: scaleX(-1); }
+
+        .badge {
+            display: inline-block;
+            background-color: #22c55e;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 9999px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
     </style>
 </head>
-<body class="bg-gray-100 text-gray-800">
+<body>
 
     <!-- 1. 홈 화면 -->
-    <div id="page-home" class="page active min-h-screen flex-col items-center justify-center">
-        <div class="bg-white p-8 rounded-lg shadow-xl text-center max-w-md w-full">
-            <h1 class="text-4xl font-bold text-blue-600 mb-2">ezlive</h1>
-            <!-- 버전 확인용 마크 -->
-            <span class="inline-block bg-yellow-300 text-yellow-800 text-xs px-2 py-1 rounded-full mb-6 font-bold">
-                ✅ 버전 2 (업데이트 성공)
-            </span>
+    <div id="page-home" class="page active">
+        <div class="bg-white p-8 rounded-2xl shadow-xl text-center max-w-sm w-full">
+            <h1 class="text-5xl font-bold text-blue-600 mb-2">ezlive</h1>
+            <span class="badge">✅ 버전 3 (연결 가능)</span>
             
-            <div class="space-y-3">
-                <button onclick="goPage('create')" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-bold transition">
-                    교사용 화상강의 생성
+            <div class="space-y-4 mt-6">
+                <button onclick="goPage('create')" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-xl font-bold text-lg transition shadow-md">
+                    👨‍🏫 교사용 방 만들기
                 </button>
-                <button onclick="goPage('join')" class="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-bold transition">
-                    학생용 강의 참여
+                <button onclick="goPage('join')" class="w-full bg-green-600 hover:bg-green-700 text-white py-4 rounded-xl font-bold text-lg transition shadow-md">
+                    👨‍🎓 학생용 입장하기
                 </button>
             </div>
-            <p class="mt-4 text-xs text-gray-400">새로고침(F5)을 해도 이 화면이면 성공입니다.</p>
+            <p class="mt-6 text-gray-400 text-sm">새로고침(F5) 후 초록색 배지를 확인하세요!</p>
         </div>
     </div>
 
-    <!-- 2. 생성 화면 -->
-    <div id="page-create" class="page min-h-screen flex-col items-center justify-center">
-        <div class="bg-white p-8 rounded-lg shadow-xl text-center max-w-md w-full">
-            <h2 class="text-2xl font-bold mb-4">강의실 만들기</h2>
-            <input type="text" id="room-name" placeholder="방 이름 (예: math)" class="w-full border p-2 mb-2 rounded">
-            <button onclick="startRoom()" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold">시작하기</button>
-            <button onclick="goPage('home')" class="mt-2 text-gray-500 text-sm underline">돌아가기</button>
+    <!-- 2. 교사: 방 만들기 -->
+    <div id="page-create" class="page">
+        <div class="bg-white p-8 rounded-2xl shadow-xl text-center max-w-sm w-full">
+            <h2 class="text-2xl font-bold mb-6">강의실 이름 짓기</h2>
+            <input type="text" id="create-name" placeholder="예: math (영어로)" class="w-full border-2 border-gray-200 p-4 mb-4 rounded-xl focus:outline-none focus:border-blue-500 text-lg">
+            <button onclick="startHosting()" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold text-lg shadow-md">방송 시작</button>
+            <button onclick="goPage('home')" class="mt-4 text-gray-500 underline">돌아가기</button>
         </div>
     </div>
 
-    <!-- 3. 참여 화면 -->
-    <div id="page-join" class="page min-h-screen flex-col items-center justify-center">
-        <div class="bg-white p-8 rounded-lg shadow-xl text-center max-w-md w-full">
-            <h2 class="text-2xl font-bold mb-4">강의 참여하기</h2>
-            <input type="text" id="join-id" placeholder="방 이름" class="w-full border p-2 mb-2 rounded">
-            <button onclick="joinRoom()" class="w-full bg-green-600 text-white py-3 rounded-lg font-bold">입장하기</button>
-            <button onclick="goPage('home')" class="mt-2 text-gray-500 text-sm underline">돌아가기</button>
+    <!-- 3. 학생: 입장하기 -->
+    <div id="page-join" class="page">
+        <div class="bg-white p-8 rounded-2xl shadow-xl text-center max-w-sm w-full">
+            <h2 class="text-2xl font-bold mb-6">강의실 찾아가기</h2>
+            <input type="text" id="join-name" placeholder="선생님이 알려준 방 이름" class="w-full border-2 border-gray-200 p-4 mb-4 rounded-xl focus:outline-none focus:border-green-500 text-lg">
+            <button onclick="joinSession()" class="w-full bg-green-600 text-white py-4 rounded-xl font-bold text-lg shadow-md">입장하기</button>
+            <button onclick="goPage('home')" class="mt-4 text-gray-500 underline">돌아가기</button>
         </div>
     </div>
 
     <!-- 4. 화상 회의실 -->
-    <div id="page-room" class="page h-screen bg-gray-900 text-white flex-col p-4 hidden">
-        <div class="flex justify-between items-center mb-4">
-            <h3 class="font-bold text-lg">ezlive 강의실</h3>
-            <button onclick="location.reload()" class="bg-red-500 px-4 py-1 rounded text-sm">나가기</button>
+    <div id="page-room" class="page hidden bg-gray-900">
+        <div class="fixed top-0 left-0 right-0 p-4 flex justify-between items-center bg-black/50 backdrop-blur-sm z-10 text-white">
+            <div class="font-bold text-xl">📡 방 이름: <span id="display-room-name" class="text-yellow-400"></span></div>
+            <button onclick="location.reload()" class="bg-red-500 hover:bg-red-600 px-6 py-2 rounded-full font-bold transition">종료</button>
         </div>
         <div id="video-grid"></div>
+        <div id="status-msg" class="fixed bottom-10 bg-black/70 text-white px-4 py-2 rounded-full text-sm">대기 중...</div>
     </div>
 
     <script>
-        // --- 간단하고 확실한 스크립트 ---
-        const pages = {
-            home: document.getElementById('page-home'),
-            create: document.getElementById('page-create'),
-            join: document.getElementById('page-join'),
-            room: document.getElementById('page-room')
-        };
-
-        // 페이지 이동 함수
-        function goPage(pageName) {
-            Object.values(pages).forEach(p => p.classList.remove('active'));
-            // 'room' 페이지는 flex가 아니라 block이나 grid일 수 있으니 처리
-            pages[pageName].classList.add('active'); 
+        // --- 페이지 이동 로직 ---
+        const pages = ['home', 'create', 'join', 'room'];
+        function goPage(target) {
+            pages.forEach(p => {
+                document.getElementById(`page-${p}`).classList.remove('active');
+                if(p === 'room') document.getElementById(`page-${p}`).classList.add('hidden');
+            });
+            const t = document.getElementById(`page-${target}`);
+            t.classList.add('active');
+            t.classList.remove('hidden');
         }
 
-        // PeerJS 및 비디오 처리
+        // --- 화상 통화 핵심 로직 ---
         let peer;
         let myStream;
 
-        async function startRoom() {
-            const roomName = document.getElementById('room-name').value;
-            if(!roomName) return alert("방 이름을 입력하세요");
-            
-            await initMedia();
-            initPeer(roomName); // 교사는 방 이름을 ID로
-        }
-
-        async function joinRoom() {
-            const roomId = document.getElementById('join-id').value;
-            if(!roomId) return alert("방 이름을 입력하세요");
-
-            await initMedia();
-            initPeer(); // 학생은 랜덤 ID
-            // 학생은 연결 로직이 추가로 필요하지만, 일단 화면 전환 테스트가 우선
-        }
-
+        // 1. 공통: 카메라 켜기
         async function initMedia() {
             try {
+                // 내 얼굴 나오게 하기
                 myStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-                addVideo(myStream, true); // 내 비디오 추가
+                addVideo(myStream, true); 
                 goPage('room');
+                return true;
             } catch(e) {
-                alert("카메라 권한이 필요합니다! (HTTPS 또는 localhost 필수)");
-                console.error(e);
+                alert("카메라 권한을 허용해주세요! (주소창 자물쇠 클릭)");
+                return false;
             }
         }
 
-        function initPeer(id) {
-            peer = id ? new Peer(id) : new Peer();
-            peer.on('open', myId => {
-                console.log("My ID:", myId);
-                // 실제 연결 로직은 여기에 추가됨
-            });
+        // 2. 교사: 방 만들기 (전화 받기 대기)
+        async function startHosting() {
+            const roomName = document.getElementById('create-name').value.trim();
+            if(!roomName) return alert("방 이름을 입력하세요!");
+
+            if(await initMedia()) {
+                document.getElementById('display-room-name').innerText = roomName;
+                document.getElementById('status-msg').innerText = "학생을 기다리는 중...";
+                
+                // 교사는 방 이름을 ID로 사용
+                peer = new Peer(roomName);
+                
+                // 학생에게 전화가 오면 받음
+                peer.on('call', call => {
+                    call.answer(myStream); // 내 영상 보내주기
+                    call.on('stream', studentStream => {
+                        addVideo(studentStream, false); // 학생 영상 화면에 띄우기
+                        document.getElementById('status-msg').innerText = "학생이 입장했습니다!";
+                    });
+                });
+            }
         }
 
-        function addVideo(stream, isMuted) {
-            const div = document.createElement('div');
-            div.className = 'video-container';
+        // 3. 학생: 방 들어가기 (전화 걸기)
+        async function joinSession() {
+            const roomName = document.getElementById('join-name').value.trim();
+            if(!roomName) return alert("방 이름을 입력하세요!");
+
+            if(await initMedia()) {
+                document.getElementById('display-room-name').innerText = roomName;
+                document.getElementById('status-msg').innerText = "선생님에게 연결 중...";
+
+                // 학생은 랜덤 ID 사용
+                peer = new Peer();
+                
+                peer.on('open', () => {
+                    // 선생님(roomName)에게 전화 걸기
+                    const call = peer.call(roomName, myStream);
+                    
+                    call.on('stream', teacherStream => {
+                        addVideo(teacherStream, false); // 선생님 영상 띄우기
+                        document.getElementById('status-msg').innerText = "연결 성공!";
+                    });
+                });
+                
+                peer.on('error', err => {
+                    alert("선생님이 아직 방을 안 만들었거나 이름이 틀렸어요!");
+                    location.reload();
+                });
+            }
+        }
+
+        // 4. 화면에 비디오 추가하는 함수
+        function addVideo(stream, isMe) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'video-container';
+            
             const video = document.createElement('video');
             video.srcObject = stream;
             video.autoplay = true;
             video.playsInline = true;
-            if(isMuted) video.muted = true;
-            div.appendChild(video);
-            document.getElementById('video-grid').appendChild(div);
+            
+            if(isMe) {
+                video.muted = true; // 내 소리는 안 들리게 (하울링 방지)
+                video.classList.add('my-video'); // 거울 모드
+            }
+            
+            wrapper.appendChild(video);
+            document.getElementById('video-grid').appendChild(wrapper);
         }
     </script>
 </body>
