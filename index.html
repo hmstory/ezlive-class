@@ -2,118 +2,142 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ezlive - 1:1 완성판</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ezlive - 아이폰 해결판</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
-        body { font-family: "Pretendard", sans-serif; background-color: #f3f4f6; }
+        body { font-family: "Pretendard", sans-serif; background-color: #111827; color: white; }
         .page { display: none; }
         .page.active { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; }
         
         #video-grid { 
             display: grid; 
-            /* 화면이 2개일 때는 꽉 차게, 하나면 중앙에 */
             grid-template-columns: repeat(auto-fit, minmax(45%, 1fr)); 
-            gap: 15px; 
+            gap: 10px; 
             width: 100%; 
             max-width: 1200px; 
-            height: 80vh; 
-            padding: 20px;
+            height: 85vh; 
+            padding: 10px;
         }
         
         .video-container { 
             position: relative; 
             width: 100%; 
             height: 100%; 
-            background: #2d2d2d; 
-            border-radius: 16px; 
+            background: #1f2937; 
+            border-radius: 12px; 
             overflow: hidden; 
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            border: 1px solid #374151;
         }
         
         video { 
             width: 100%; 
             height: 100%; 
             object-fit: cover; 
+            background-color: black;
         }
         
         .my-video { transform: scaleX(-1); }
 
         .badge {
             display: inline-block;
-            background-color: #2563eb; /* 파란색 */
+            background-color: #059669; /* 초록색 */
             color: white;
-            padding: 4px 12px;
+            padding: 6px 15px;
             border-radius: 9999px;
-            font-size: 0.8rem;
+            font-size: 0.9rem;
             font-weight: bold;
             margin-bottom: 20px;
         }
-        
-        .label {
+
+        /* 강제 재생 안내 문구 */
+        .tap-guide {
             position: absolute;
-            bottom: 10px;
-            left: 10px;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            pointer-events: none; /* 클릭 통과 */
+            z-index: 20;
             background: rgba(0,0,0,0.6);
-            color: white;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 0.8rem;
+            padding: 10px;
+            border-radius: 10px;
         }
     </style>
 </head>
 <body>
 
     <!-- 1. 홈 화면 -->
-    <div id="page-home" class="page active">
-        <div class="bg-white p-8 rounded-2xl shadow-xl text-center max-w-sm w-full">
-            <h1 class="text-5xl font-bold text-blue-600 mb-2">ezlive</h1>
-            <span class="badge">💎 버전 6 (1:1 고정)</span>
+    <div id="page-home" class="page active bg-gray-900">
+        <div class="bg-gray-800 p-8 rounded-2xl shadow-2xl text-center max-w-sm w-full border border-gray-700">
+            <h1 class="text-5xl font-bold text-blue-500 mb-2">ezlive</h1>
+            <span class="badge">🍏 버전 9 (아이폰 전용)</span>
             
             <div class="space-y-4 mt-6">
-                <button onclick="goPage('create')" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-xl font-bold text-lg transition shadow-md">
+                <button onclick="goPage('create')" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-xl font-bold text-lg transition">
                     👨‍🏫 교사용 방 만들기
                 </button>
-                <button onclick="goPage('join')" class="w-full bg-green-600 hover:bg-green-700 text-white py-4 rounded-xl font-bold text-lg transition shadow-md">
+                <button onclick="goPage('join')" class="w-full bg-green-600 hover:bg-green-700 text-white py-4 rounded-xl font-bold text-lg transition">
                     👨‍🎓 학생용 입장하기
                 </button>
             </div>
-            <p class="mt-6 text-gray-400 text-sm">새로고침(F5) 후 파란색 배지를 확인하세요!</p>
+            <p class="mt-6 text-gray-400 text-xs">
+                * 화면이 검게 나오면 화면 아무 곳이나 터치하세요!
+            </p>
         </div>
     </div>
 
-    <!-- 2. 교사: 방 만들기 -->
-    <div id="page-create" class="page">
-        <div class="bg-white p-8 rounded-2xl shadow-xl text-center max-w-sm w-full">
-            <h2 class="text-2xl font-bold mb-6">강의실 이름 짓기</h2>
-            <input type="text" id="create-name" placeholder="예: math (영어로)" class="w-full border-2 border-gray-200 p-4 mb-4 rounded-xl focus:outline-none focus:border-blue-500 text-lg">
-            <button onclick="startHosting()" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold text-lg shadow-md">방송 시작</button>
-            <button onclick="goPage('home')" class="mt-4 text-gray-500 underline">돌아가기</button>
+    <!-- 2. 방 만들기/입장하기 공통 UI -->
+    <div id="page-create" class="page bg-gray-900">
+        <div class="bg-gray-800 p-8 rounded-2xl shadow-2xl text-center max-w-sm w-full border border-gray-700">
+            <h2 class="text-2xl font-bold mb-6">강의실 이름</h2>
+            <input type="text" id="create-name" placeholder="예: math (영어)" class="w-full bg-gray-700 border border-gray-600 p-4 mb-4 rounded-xl text-white text-lg focus:outline-none focus:border-blue-500">
+            <button onclick="startHosting()" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold text-lg">방송 시작</button>
+            <button onclick="goPage('home')" class="mt-4 text-gray-400 underline">뒤로가기</button>
         </div>
     </div>
 
-    <!-- 3. 학생: 입장하기 -->
-    <div id="page-join" class="page">
-        <div class="bg-white p-8 rounded-2xl shadow-xl text-center max-w-sm w-full">
-            <h2 class="text-2xl font-bold mb-6">강의실 찾아가기</h2>
-            <input type="text" id="join-name" placeholder="선생님이 알려준 방 이름" class="w-full border-2 border-gray-200 p-4 mb-4 rounded-xl focus:outline-none focus:border-green-500 text-lg">
-            <button onclick="joinSession()" class="w-full bg-green-600 text-white py-4 rounded-xl font-bold text-lg shadow-md">입장하기</button>
-            <button onclick="goPage('home')" class="mt-4 text-gray-500 underline">돌아가기</button>
+    <div id="page-join" class="page bg-gray-900">
+        <div class="bg-gray-800 p-8 rounded-2xl shadow-2xl text-center max-w-sm w-full border border-gray-700">
+            <h2 class="text-2xl font-bold mb-6">강의실 입장</h2>
+            <input type="text" id="join-name" placeholder="방 이름 입력" class="w-full bg-gray-700 border border-gray-600 p-4 mb-4 rounded-xl text-white text-lg focus:outline-none focus:border-green-500">
+            <button onclick="joinSession()" class="w-full bg-green-600 text-white py-4 rounded-xl font-bold text-lg">입장하기</button>
+            <button onclick="goPage('home')" class="mt-4 text-gray-400 underline">뒤로가기</button>
         </div>
     </div>
 
-    <!-- 4. 화상 회의실 -->
-    <div id="page-room" class="page hidden bg-gray-900">
-        <div class="fixed top-0 left-0 right-0 p-4 flex justify-between items-center bg-black/50 backdrop-blur-sm z-10 text-white">
-            <div class="font-bold text-xl">📡 방 이름: <span id="display-room-name" class="text-yellow-400"></span></div>
-            <button onclick="location.reload()" class="bg-red-500 hover:bg-red-600 px-6 py-2 rounded-full font-bold transition">종료</button>
+    <!-- 3. 화상 회의실 -->
+    <div id="page-room" class="page hidden bg-black" onclick="forcePlay()">
+        <div class="fixed top-0 left-0 right-0 p-4 flex justify-between items-center bg-black/50 backdrop-blur-md z-50">
+            <div class="font-bold text-lg">📡 <span id="display-room-name" class="text-yellow-400"></span></div>
+            <button onclick="location.reload()" class="bg-red-600 px-4 py-2 rounded-lg text-sm font-bold">나가기</button>
         </div>
+        
         <div id="video-grid"></div>
-        <div id="status-msg" class="fixed bottom-10 bg-black/70 text-white px-4 py-2 rounded-full text-sm">대기 중...</div>
+        
+        <div id="status-msg" class="fixed bottom-20 left-1/2 transform -translate-x-1/2 bg-gray-800/90 text-white px-6 py-2 rounded-full text-sm whitespace-nowrap border border-gray-600 z-50 pointer-events-none">
+            대기 중...
+        </div>
     </div>
 
     <script>
+        // --- 아이폰 강제 재생 치트키 ---
+        // 화면 아무 곳이나 터치하면 멈춰있던 비디오들을 전부 깨웁니다.
+        document.body.addEventListener('click', forcePlay);
+        document.body.addEventListener('touchstart', forcePlay);
+
+        function forcePlay() {
+            const videos = document.querySelectorAll('video');
+            videos.forEach(video => {
+                if (video.paused) {
+                    video.play().catch(e => console.log("재생 시도 중..."));
+                    // 로딩 텍스트 숨기기
+                    const guide = video.parentElement.querySelector('.tap-guide');
+                    if(guide) guide.style.display = 'none';
+                }
+            });
+        }
+
         const pages = ['home', 'create', 'join', 'room'];
         function goPage(target) {
             pages.forEach(p => {
@@ -128,7 +152,6 @@
         let peer;
         let myStream;
 
-        // 구글 무료 STUN 서버 (연결 강화)
         const peerConfig = {
             config: {
                 'iceServers': [
@@ -140,33 +163,31 @@
 
         async function initMedia() {
             try {
-                myStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-                // 내 비디오 추가 (ID: my-video)
+                myStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: "user" }, 
+                    audio: true 
+                });
                 addVideo(myStream, true, 'my-video'); 
                 goPage('room');
                 return true;
             } catch(e) {
-                alert("카메라 권한을 허용해주세요!");
+                alert("카메라 권한 필수!");
                 return false;
             }
         }
 
         async function startHosting() {
             const roomName = document.getElementById('create-name').value.trim();
-            if(!roomName) return alert("방 이름을 입력하세요!");
-
+            if(!roomName) return;
             if(await initMedia()) {
                 document.getElementById('display-room-name').innerText = roomName;
                 document.getElementById('status-msg').innerText = "학생을 기다리는 중...";
-                
                 peer = new Peer(roomName, peerConfig);
-                
                 peer.on('call', call => {
                     call.answer(myStream);
                     call.on('stream', studentStream => {
-                        // 상대방 비디오 추가 (ID: peer-video) -> 중복 방지됨
                         addVideo(studentStream, false, 'peer-video');
-                        document.getElementById('status-msg').innerText = "학생이 입장했습니다!";
+                        document.getElementById('status-msg').innerText = "학생 입장!";
                     });
                 });
             }
@@ -174,60 +195,67 @@
 
         async function joinSession() {
             const roomName = document.getElementById('join-name').value.trim();
-            if(!roomName) return alert("방 이름을 입력하세요!");
-
+            if(!roomName) return;
             if(await initMedia()) {
                 document.getElementById('display-room-name').innerText = roomName;
-                document.getElementById('status-msg').innerText = "연결 중...";
-                
+                document.getElementById('status-msg').innerText = "연결 시도 중...";
                 peer = new Peer(null, peerConfig);
-                
                 peer.on('open', () => {
                     const call = peer.call(roomName, myStream);
                     call.on('stream', teacherStream => {
-                        // 상대방 비디오 추가 (ID: peer-video) -> 중복 방지됨
                         addVideo(teacherStream, false, 'peer-video');
                         document.getElementById('status-msg').innerText = "연결 성공!";
                     });
                 });
-                peer.on('error', err => {
-                    alert("방을 찾을 수 없습니다.");
-                    location.reload();
-                });
+                peer.on('error', () => { alert("방을 못 찾겠어요."); location.reload(); });
             }
         }
 
-        // [핵심] 중복 방지 기능이 추가된 비디오 생성 함수
         function addVideo(stream, isMe, videoId) {
-            // 1. 이미 있는 비디오인지 확인하고 삭제 (중복 방지)
             const existing = document.getElementById(videoId);
             if(existing) existing.remove();
 
             const wrapper = document.createElement('div');
-            wrapper.id = videoId; // ID 부여
+            wrapper.id = videoId;
             wrapper.className = 'video-container';
             
             const label = document.createElement('div');
-            label.className = 'label';
+            label.className = 'label'; // CSS에서 정의된 스타일 사용 (하단 이름표)
+            label.style.position = 'absolute';
+            label.style.bottom = '10px';
+            label.style.left = '10px';
+            label.style.background = 'rgba(0,0,0,0.6)';
+            label.style.padding = '4px 8px';
+            label.style.borderRadius = '4px';
+            label.style.fontSize = '0.8rem';
             label.innerText = isMe ? "나" : "상대방";
             wrapper.appendChild(label);
             
             const video = document.createElement('video');
             video.srcObject = stream;
             video.autoplay = true;
-            video.playsInline = true;
-            video.controls = true; // 검은 화면 방지용 컨트롤
+            
+            // [핵심] 아이폰 사파리 필수 속성 3총사
+            video.setAttribute('playsinline', '');
+            video.setAttribute('webkit-playsinline', '');
+            video.muted = false; // 기본은 소리 켬
             
             if(isMe) {
-                video.muted = true;
+                video.muted = true; // 내 소리는 끔
                 video.classList.add('my-video');
-                video.controls = false;
             } else {
-                video.onclick = function() { this.play(); }; // 클릭 시 강제 재생
+                // 상대방 화면에만 안내 문구 추가
+                const guide = document.createElement('div');
+                guide.className = 'tap-guide';
+                guide.innerHTML = "👆 화면이 검다면<br>여기를 터치!";
+                wrapper.appendChild(guide);
             }
             
             wrapper.appendChild(video);
             document.getElementById('video-grid').appendChild(wrapper);
+            
+            // 자동 재생 시도 (실패하면 터치 이벤트를 기다림)
+            video.play().catch(() => console.log("자동 재생 대기 중... 화면 터치 필요"));
         }
     </script>
 </body>
