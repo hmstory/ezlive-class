@@ -3,23 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ezlive - 범용 접속 표준안</title>
+    <title>ezlive - 정답 확인용</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
-        body { font-family: "Pretendard", sans-serif; background-color: #111827; color: white; overflow: hidden; }
+        body { font-family: "Pretendard", sans-serif; background-color: #000; color: white; overflow: hidden; }
         .page { display: none; }
         .page.active { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; }
         
         #video-grid { 
             display: grid; 
             grid-template-columns: 1fr 1fr; 
-            gap: 1rem; 
+            gap: 10px; 
             width: 100%; 
-            max-width: 1400px; 
-            height: 85vh; 
-            padding: 1rem;
-            align-items: center;
+            height: 100vh; 
+            padding: 10px;
+            background: #000;
         }
 
         @media (max-width: 768px) {
@@ -30,52 +29,44 @@
             position: relative; 
             width: 100%; 
             height: 100%; 
-            background: #1f2937; 
-            border-radius: 1rem; 
+            background: #222; 
+            border-radius: 12px; 
             overflow: hidden; 
-            border: 1px solid #374151;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+            border: 1px solid #444;
         }
         
         video { 
             width: 100%; 
             height: 100%; 
             object-fit: cover; 
-            background-color: #000;
         }
         
         .my-video { transform: scaleX(-1); }
 
+        /* 연결 상태 로그창 */
+        .status-log {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 0.9rem;
+            z-index: 50;
+            border: 1px solid #666;
+            white-space: pre-line;
+        }
+
         .badge {
             display: inline-block;
-            background-color: #db2777; /* 핑크색 */
+            background-color: #dc2626; /* 빨간색 */
             color: white;
             padding: 6px 15px;
-            border-radius: 9999px;
+            border-radius: 20px;
             font-size: 0.9rem;
             font-weight: bold;
             margin-bottom: 20px;
-        }
-
-        .status-overlay {
-            position: absolute;
-            inset: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(0,0,0,0.7);
-            z-index: 10;
-            pointer-events: none;
-        }
-        
-        .video-label {
-            position: absolute;
-            bottom: 10px; left: 10px;
-            background: rgba(0,0,0,0.6);
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 0.8rem;
-            z-index: 20;
         }
     </style>
 </head>
@@ -83,54 +74,45 @@
 
     <!-- 1. 홈 화면 -->
     <div id="page-home" class="page active bg-gray-900">
-        <div class="bg-gray-800 p-8 rounded-3xl shadow-2xl text-center max-w-sm w-full border border-gray-700">
-            <h1 class="text-5xl font-bold text-blue-500 mb-2">ezlive</h1>
-            <span class="badge">🌐 버전 12 (범용 표준)</span>
+        <div class="bg-gray-800 p-8 rounded-2xl text-center max-w-sm w-full border border-gray-700">
+            <h1 class="text-4xl font-bold text-white mb-4">ezlive</h1>
+            <span class="badge">🔥 버전 13 (진단 모드)</span>
             
-            <div class="space-y-4 mt-8">
-                <button onclick="goPage('create')" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-2xl font-bold text-lg transition shadow-lg">
-                    👨‍🏫 교사용 방 만들기
+            <div class="space-y-4 mt-4">
+                <button onclick="goPage('create')" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold text-lg">
+                    👨‍🏫 방 만들기
                 </button>
-                <button onclick="goPage('join')" class="w-full bg-green-600 hover:bg-green-700 text-white py-4 rounded-2xl font-bold text-lg transition shadow-lg">
-                    👨‍🎓 학생용 입장하기
+                <button onclick="goPage('join')" class="w-full bg-green-600 text-white py-4 rounded-xl font-bold text-lg">
+                    👨‍🎓 입장하기
                 </button>
             </div>
-            <p class="mt-6 text-gray-500 text-xs">
-                * 모든 기기 및 LTE 환경 최적화 적용됨
-            </p>
         </div>
     </div>
 
-    <!-- 2. 방 만들기/입장하기 -->
+    <!-- 2. 생성/입장 UI -->
     <div id="page-create" class="page bg-gray-900">
-        <div class="bg-gray-800 p-8 rounded-3xl shadow-2xl text-center max-w-sm w-full border border-gray-700">
-            <h2 class="text-2xl font-bold mb-6">강의실 이름</h2>
-            <input type="text" id="create-name" placeholder="예: class1" class="w-full bg-gray-700 border border-gray-600 p-4 mb-6 rounded-2xl text-white text-lg focus:outline-none focus:border-blue-500 text-center">
-            <button onclick="startHosting()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold text-lg">방송 시작</button>
-            <button onclick="goPage('home')" class="mt-6 text-gray-400 underline text-sm">뒤로가기</button>
+        <div class="bg-gray-800 p-8 rounded-2xl text-center max-w-sm w-full border border-gray-700">
+            <h2 class="text-2xl font-bold mb-4">방 이름</h2>
+            <input type="text" id="create-name" placeholder="예: math" class="w-full bg-gray-700 border border-gray-600 p-4 mb-4 rounded-xl text-white text-lg text-center">
+            <button onclick="startHosting()" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold text-lg">시작</button>
+            <button onclick="goPage('home')" class="mt-4 text-gray-400 underline">뒤로가기</button>
         </div>
     </div>
 
     <div id="page-join" class="page bg-gray-900">
-        <div class="bg-gray-800 p-8 rounded-3xl shadow-2xl text-center max-w-sm w-full border border-gray-700">
-            <h2 class="text-2xl font-bold mb-6">강의실 입장</h2>
-            <input type="text" id="join-name" placeholder="방 이름 입력" class="w-full bg-gray-700 border border-gray-600 p-4 mb-6 rounded-2xl text-white text-lg focus:outline-none focus:border-green-500 text-center">
-            <button onclick="joinSession()" class="w-full bg-green-600 text-white py-4 rounded-2xl font-bold text-lg">입장하기</button>
-            <button onclick="goPage('home')" class="mt-6 text-gray-400 underline text-sm">뒤로가기</button>
+        <div class="bg-gray-800 p-8 rounded-2xl text-center max-w-sm w-full border border-gray-700">
+            <h2 class="text-2xl font-bold mb-4">방 이름</h2>
+            <input type="text" id="join-name" placeholder="선생님이 만든 방 이름" class="w-full bg-gray-700 border border-gray-600 p-4 mb-4 rounded-xl text-white text-lg text-center">
+            <button onclick="joinSession()" class="w-full bg-green-600 text-white py-4 rounded-xl font-bold text-lg">입장</button>
+            <button onclick="goPage('home')" class="mt-4 text-gray-400 underline">뒤로가기</button>
         </div>
     </div>
 
-    <!-- 3. 화상 회의실 -->
-    <div id="page-room" class="page hidden bg-black">
-        <div class="fixed top-0 left-0 right-0 p-6 flex justify-between items-center z-50">
-            <div class="font-bold text-xl bg-black/50 px-4 py-2 rounded-full backdrop-blur-md">📡 <span id="display-room-name" class="text-yellow-400"></span></div>
-            <button onclick="location.reload()" class="bg-red-600 hover:bg-red-700 px-6 py-2 rounded-full text-sm font-bold shadow-lg transition">종료</button>
-        </div>
-        
+    <!-- 3. 강의실 -->
+    <div id="page-room" class="page hidden">
         <div id="video-grid"></div>
-        
-        <div id="status-msg" class="fixed bottom-10 left-1/2 transform -translate-x-1/2 bg-gray-800/90 text-white px-6 py-3 rounded-full text-sm whitespace-nowrap border border-gray-600 z-50 pointer-events-none shadow-xl">
-            대기 중...
+        <div style="position: fixed; bottom: 20px; left: 20px; background: black; padding: 5px; font-size: 10px; opacity: 0.5;">
+            ID: <span id="my-id-display">...</span>
         </div>
     </div>
 
@@ -149,16 +131,15 @@
         let peer;
         let myStream;
 
-        // [핵심] 무료로 긁어모은 최강 STUN 서버 리스트 (우회로 확보)
+        // [핵심] 최신 표준(Unified Plan) 적용 및 STUN 서버
         const peerConfig = {
-            debug: 2, // 에러 로그 확인용
+            debug: 2,
+            sdpSemantics: 'unified-plan', // [중요] 최신 브라우저 호환성 해결
             config: {
                 'iceServers': [
                     { url: 'stun:stun.l.google.com:19302' },
                     { url: 'stun:stun1.l.google.com:19302' },
                     { url: 'stun:stun2.l.google.com:19302' },
-                    { url: 'stun:stun3.l.google.com:19302' },
-                    { url: 'stun:stun4.l.google.com:19302' },
                     { url: 'stun:global.stun.twilio.com:3478' }
                 ]
             }
@@ -166,21 +147,12 @@
 
         async function initMedia() {
             try {
-                // 화질 타협 (360p): 끊김 방지 및 연결 성공률 향상
-                myStream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { 
-                        facingMode: "user",
-                        width: { ideal: 480 },
-                        height: { ideal: 640 },
-                        frameRate: { ideal: 15 }
-                    }, 
-                    audio: true 
-                });
-                addVideo(myStream, true, 'my-video'); 
+                myStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: true });
+                addVideo(myStream, true, 'my-video');
                 goPage('room');
                 return true;
             } catch(e) {
-                alert("카메라 권한 실패: " + e.message);
+                alert("카메라 권한 오류: " + e);
                 return false;
             }
         }
@@ -189,20 +161,14 @@
             const roomName = document.getElementById('create-name').value.trim();
             if(!roomName) return;
             if(await initMedia()) {
-                document.getElementById('display-room-name').innerText = roomName;
-                document.getElementById('status-msg').innerText = "학생 기다리는 중...";
-                
                 peer = new Peer(roomName, peerConfig);
+                
+                peer.on('open', id => document.getElementById('my-id-display').innerText = id);
                 
                 peer.on('call', call => {
                     call.answer(myStream);
-                    call.on('stream', studentStream => {
-                        addVideo(studentStream, false, 'peer-video');
-                        document.getElementById('status-msg').innerText = "학생 입장!";
-                    });
+                    setupCallEvents(call, false);
                 });
-                
-                peer.on('error', err => alert("연결 오류: " + err.type));
             }
         }
 
@@ -210,35 +176,34 @@
             const roomName = document.getElementById('join-name').value.trim();
             if(!roomName) return;
             if(await initMedia()) {
-                document.getElementById('display-room-name').innerText = roomName;
-                document.getElementById('status-msg').innerText = "연결 시도 중...";
-                
                 peer = new Peer(null, peerConfig);
                 
-                peer.on('open', () => {
+                peer.on('open', id => {
+                    document.getElementById('my-id-display').innerText = id;
                     const call = peer.call(roomName, myStream);
-                    
-                    call.on('stream', teacherStream => {
-                        addVideo(teacherStream, false, 'peer-video');
-                        document.getElementById('status-msg').innerText = "연결 성공!";
-                    });
-                    
-                    // 3초 뒤에도 연결 안 되면 재시도 유도
-                    setTimeout(() => {
-                        if(document.getElementById('status-msg').innerText === "연결 시도 중...") {
-                            alert("연결이 지연되고 있습니다. LTE 연결이 불안정할 수 있습니다.");
-                        }
-                    }, 5000);
+                    setupCallEvents(call, true);
                 });
                 
-                peer.on('error', err => {
-                    alert("방을 찾을 수 없거나 연결 실패: " + err.type);
-                    location.reload(); 
-                });
+                peer.on('error', err => alert("오류: " + err.type));
             }
         }
 
-        function addVideo(stream, isMe, videoId) {
+        // [중요] 연결 상태 모니터링 및 이벤트 처리
+        function setupCallEvents(call, isInitiator) {
+            call.on('stream', stream => {
+                addVideo(stream, false, 'peer-video', call);
+            });
+            
+            call.on('close', () => {
+                alert("상대방 연결이 끊겼습니다.");
+                const el = document.getElementById('peer-video');
+                if(el) el.remove();
+            });
+            
+            call.on('error', err => console.error(err));
+        }
+
+        function addVideo(stream, isMe, videoId, call) {
             const existing = document.getElementById(videoId);
             if(existing) existing.remove();
 
@@ -246,46 +211,55 @@
             wrapper.id = videoId;
             wrapper.className = 'video-container';
             
-            const label = document.createElement('div');
-            label.className = 'video-label';
-            label.innerText = isMe ? "나" : "상대방";
-            wrapper.appendChild(label);
-            
             const video = document.createElement('video');
             video.srcObject = stream;
-            
-            // [핵심 전략] 일단 소리를 끄고(Muted) 자동 재생 시도 -> 성공 확률 대폭 상승
-            video.muted = true; 
+            video.setAttribute('playsinline', ''); 
+            video.setAttribute('webkit-playsinline', '');
             video.autoplay = true;
-            video.playsInline = true; // iOS 표준
             
-            // 상태 표시 오버레이
-            const status = document.createElement('div');
-            status.className = 'status-overlay';
-            status.innerText = "영상 수신 중...";
-            if(isMe) status.style.display = 'none';
-            wrapper.appendChild(status);
+            // 소리 설정: 나는 끄고, 상대는 켜고
+            if(isMe) {
+                video.muted = true;
+                video.classList.add('my-video');
+            } else {
+                video.muted = false; // 상대방 소리 켜기
+                
+                // [진단용] 연결 상태 로그창
+                const log = document.createElement('div');
+                log.className = 'status-log';
+                log.innerText = "연결 시도 중...\n(잠시만 기다려주세요)";
+                wrapper.appendChild(log);
 
-            video.onloadedmetadata = () => {
-                video.play().then(() => {
-                    status.style.display = 'none'; // 재생 성공 시 오버레이 제거
-                    // 상대방 영상이고, 재생에 성공했다면 소리 켜기 시도
-                    if(!isMe) {
-                        video.muted = false; // 여기서 소리 켜기
-                    }
-                }).catch(e => {
-                    console.log("자동 재생 실패, 터치 대기");
-                    status.innerText = "화면을 터치해주세요!";
-                    status.style.pointerEvents = "auto"; // 클릭 가능하게 변경
-                    status.onclick = () => {
-                        video.play();
-                        video.muted = false;
-                        status.style.display = 'none';
+                // 1. 메타데이터 로드 확인
+                video.onloadedmetadata = () => {
+                    log.innerText = "데이터 수신 성공!\n재생 중...";
+                    video.play().then(() => {
+                        setTimeout(() => log.style.display = 'none', 1000);
+                    }).catch(e => {
+                        log.innerText = "화면을 터치하세요!";
+                        log.onclick = () => {
+                            video.play();
+                            log.style.display = 'none';
+                        }
+                    });
+                };
+
+                // 2. ICE 연결 상태 모니터링 (방화벽 확인용)
+                if(call && call.peerConnection) {
+                    call.peerConnection.oniceconnectionstatechange = () => {
+                        const state = call.peerConnection.iceConnectionState;
+                        console.log("ICE State:", state);
+                        if(state === 'failed' || state === 'disconnected') {
+                            log.style.display = 'block';
+                            log.style.background = 'rgba(255,0,0,0.8)';
+                            log.innerText = "연결 실패!\n(방화벽이 막고 있습니다)\nLTE나 핫스팟을 써보세요.";
+                        } else if(state === 'connected' || state === 'completed') {
+                            // 연결 성공하면 로그 숨기기 시도
+                            if(video.readyState >= 3) log.style.display = 'none';
+                        }
                     };
-                });
-            };
-            
-            if(isMe) video.classList.add('my-video');
+                }
+            }
             
             wrapper.appendChild(video);
             document.getElementById('video-grid').appendChild(wrapper);
