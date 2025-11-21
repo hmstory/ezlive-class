@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ezlive - 최종 완성</title>
+    <title>ezlive - 1:1 완성판</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
@@ -13,43 +13,53 @@
         
         #video-grid { 
             display: grid; 
+            /* 화면이 2개일 때는 꽉 차게, 하나면 중앙에 */
             grid-template-columns: repeat(auto-fit, minmax(45%, 1fr)); 
-            gap: 10px; 
+            gap: 15px; 
             width: 100%; 
             max-width: 1200px; 
             height: 80vh; 
-            padding: 10px;
+            padding: 20px;
         }
         
         .video-container { 
             position: relative; 
             width: 100%; 
             height: 100%; 
-            background: #000; 
-            border-radius: 12px; 
+            background: #2d2d2d; 
+            border-radius: 16px; 
             overflow: hidden; 
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
         }
         
         video { 
             width: 100%; 
             height: 100%; 
             object-fit: cover; 
-            /* 중요: 재생 버튼이 보이도록 설정 */
-            z-index: 10;
         }
         
         .my-video { transform: scaleX(-1); }
 
         .badge {
             display: inline-block;
-            background-color: #7c3aed; /* 보라색 */
+            background-color: #2563eb; /* 파란색 */
             color: white;
             padding: 4px 12px;
             border-radius: 9999px;
             font-size: 0.8rem;
             font-weight: bold;
             margin-bottom: 20px;
+        }
+        
+        .label {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.6);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
         }
     </style>
 </head>
@@ -59,7 +69,7 @@
     <div id="page-home" class="page active">
         <div class="bg-white p-8 rounded-2xl shadow-xl text-center max-w-sm w-full">
             <h1 class="text-5xl font-bold text-blue-600 mb-2">ezlive</h1>
-            <span class="badge">🚀 버전 4 (최종 완성)</span>
+            <span class="badge">💎 버전 6 (1:1 고정)</span>
             
             <div class="space-y-4 mt-6">
                 <button onclick="goPage('create')" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-xl font-bold text-lg transition shadow-md">
@@ -69,7 +79,7 @@
                     👨‍🎓 학생용 입장하기
                 </button>
             </div>
-            <p class="mt-6 text-gray-400 text-sm">새로고침(F5) 후 보라색 배지를 확인하세요!</p>
+            <p class="mt-6 text-gray-400 text-sm">새로고침(F5) 후 파란색 배지를 확인하세요!</p>
         </div>
     </div>
 
@@ -118,10 +128,21 @@
         let peer;
         let myStream;
 
+        // 구글 무료 STUN 서버 (연결 강화)
+        const peerConfig = {
+            config: {
+                'iceServers': [
+                    { url: 'stun:stun.l.google.com:19302' },
+                    { url: 'stun:stun1.l.google.com:19302' }
+                ]
+            }
+        };
+
         async function initMedia() {
             try {
                 myStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-                addVideo(myStream, true); 
+                // 내 비디오 추가 (ID: my-video)
+                addVideo(myStream, true, 'my-video'); 
                 goPage('room');
                 return true;
             } catch(e) {
@@ -137,11 +158,14 @@
             if(await initMedia()) {
                 document.getElementById('display-room-name').innerText = roomName;
                 document.getElementById('status-msg').innerText = "학생을 기다리는 중...";
-                peer = new Peer(roomName);
+                
+                peer = new Peer(roomName, peerConfig);
+                
                 peer.on('call', call => {
                     call.answer(myStream);
                     call.on('stream', studentStream => {
-                        addVideo(studentStream, false);
+                        // 상대방 비디오 추가 (ID: peer-video) -> 중복 방지됨
+                        addVideo(studentStream, false, 'peer-video');
                         document.getElementById('status-msg').innerText = "학생이 입장했습니다!";
                     });
                 });
@@ -155,11 +179,14 @@
             if(await initMedia()) {
                 document.getElementById('display-room-name').innerText = roomName;
                 document.getElementById('status-msg').innerText = "연결 중...";
-                peer = new Peer();
+                
+                peer = new Peer(null, peerConfig);
+                
                 peer.on('open', () => {
                     const call = peer.call(roomName, myStream);
                     call.on('stream', teacherStream => {
-                        addVideo(teacherStream, false);
+                        // 상대방 비디오 추가 (ID: peer-video) -> 중복 방지됨
+                        addVideo(teacherStream, false, 'peer-video');
                         document.getElementById('status-msg').innerText = "연결 성공!";
                     });
                 });
@@ -170,32 +197,37 @@
             }
         }
 
-        function addVideo(stream, isMe) {
+        // [핵심] 중복 방지 기능이 추가된 비디오 생성 함수
+        function addVideo(stream, isMe, videoId) {
+            // 1. 이미 있는 비디오인지 확인하고 삭제 (중복 방지)
+            const existing = document.getElementById(videoId);
+            if(existing) existing.remove();
+
             const wrapper = document.createElement('div');
+            wrapper.id = videoId; // ID 부여
             wrapper.className = 'video-container';
+            
+            const label = document.createElement('div');
+            label.className = 'label';
+            label.innerText = isMe ? "나" : "상대방";
+            wrapper.appendChild(label);
             
             const video = document.createElement('video');
             video.srcObject = stream;
-            
-            // [중요] 자동 재생 설정
             video.autoplay = true;
-            video.playsInline = true; 
-            
-            // [핵심] 검은 화면 방지용 컨트롤러 표시
-            video.controls = true; 
+            video.playsInline = true;
+            video.controls = true; // 검은 화면 방지용 컨트롤
             
             if(isMe) {
                 video.muted = true;
                 video.classList.add('my-video');
-                // 내 비디오는 컨트롤 바 숨김 (거슬리니까)
-                video.controls = false; 
+                video.controls = false;
+            } else {
+                video.onclick = function() { this.play(); }; // 클릭 시 강제 재생
             }
             
             wrapper.appendChild(video);
             document.getElementById('video-grid').appendChild(wrapper);
-            
-            // 강제 재생 시도
-            video.play().catch(e => console.log("자동 재생 막힘: 사용자가 재생 버튼 눌러야 함"));
         }
     </script>
 </body>
