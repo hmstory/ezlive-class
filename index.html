@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ezlive - 최적화 완료</title>
+    <title>ezlive - 범용 접속 표준안</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
@@ -11,49 +11,44 @@
         .page { display: none; }
         .page.active { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; }
         
-        /* [해결] 창 크기 강제 1:1 고정 */
         #video-grid { 
             display: grid; 
-            grid-template-columns: 1fr 1fr; /* 무조건 반반 */
-            gap: 20px; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 1rem; 
             width: 100%; 
             max-width: 1400px; 
             height: 85vh; 
-            padding: 20px;
+            padding: 1rem;
             align-items: center;
         }
 
-        /* 모바일 세로 화면일 때는 위아래로 배치 */
         @media (max-width: 768px) {
-            #video-grid {
-                grid-template-columns: 1fr;
-                grid-template-rows: 1fr 1fr;
-            }
+            #video-grid { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; }
         }
         
         .video-container { 
             position: relative; 
             width: 100%; 
-            height: 100%; /* 그리드 칸에 꽉 차게 */
+            height: 100%; 
             background: #1f2937; 
-            border-radius: 20px; 
+            border-radius: 1rem; 
             overflow: hidden; 
-            border: 2px solid #374151;
+            border: 1px solid #374151;
             box-shadow: 0 10px 20px rgba(0,0,0,0.5);
         }
         
         video { 
             width: 100%; 
             height: 100%; 
-            object-fit: cover; /* 화면 꽉 채우기 (빈공간 X) */
-            background-color: black;
+            object-fit: cover; 
+            background-color: #000;
         }
         
         .my-video { transform: scaleX(-1); }
 
         .badge {
             display: inline-block;
-            background-color: #2563eb; /* 파란색 */
+            background-color: #db2777; /* 핑크색 */
             color: white;
             padding: 6px 15px;
             border-radius: 9999px;
@@ -62,36 +57,25 @@
             margin-bottom: 20px;
         }
 
-        .label {
+        .status-overlay {
             position: absolute;
-            bottom: 15px;
-            left: 15px;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             background: rgba(0,0,0,0.7);
-            color: white;
-            padding: 6px 12px;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            z-index: 20;
-            font-weight: bold;
-        }
-
-        /* 강제 재생 안내 */
-        .tap-guide {
-            position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(0,0,0,0.7);
-            padding: 15px 25px;
-            border-radius: 30px;
-            text-align: center;
+            z-index: 10;
             pointer-events: none;
-            z-index: 50;
-            border: 2px solid rgba(255,255,255,0.3);
-            animation: bounce 2s infinite;
         }
-        @keyframes bounce {
-            0%, 100% { transform: translate(-50%, -50%); }
-            50% { transform: translate(-50%, -60%); }
+        
+        .video-label {
+            position: absolute;
+            bottom: 10px; left: 10px;
+            background: rgba(0,0,0,0.6);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            z-index: 20;
         }
     </style>
 </head>
@@ -101,18 +85,18 @@
     <div id="page-home" class="page active bg-gray-900">
         <div class="bg-gray-800 p-8 rounded-3xl shadow-2xl text-center max-w-sm w-full border border-gray-700">
             <h1 class="text-5xl font-bold text-blue-500 mb-2">ezlive</h1>
-            <span class="badge">🏆 버전 10 (최종 최적화)</span>
+            <span class="badge">🌐 버전 12 (범용 표준)</span>
             
             <div class="space-y-4 mt-8">
-                <button onclick="goPage('create')" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-2xl font-bold text-lg transition shadow-lg transform hover:scale-105">
+                <button onclick="goPage('create')" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-2xl font-bold text-lg transition shadow-lg">
                     👨‍🏫 교사용 방 만들기
                 </button>
-                <button onclick="goPage('join')" class="w-full bg-green-600 hover:bg-green-700 text-white py-4 rounded-2xl font-bold text-lg transition shadow-lg transform hover:scale-105">
+                <button onclick="goPage('join')" class="w-full bg-green-600 hover:bg-green-700 text-white py-4 rounded-2xl font-bold text-lg transition shadow-lg">
                     👨‍🎓 학생용 입장하기
                 </button>
             </div>
             <p class="mt-6 text-gray-500 text-xs">
-                * 끊김 방지를 위해 화질이 자동 조정됩니다.
+                * 모든 기기 및 LTE 환경 최적화 적용됨
             </p>
         </div>
     </div>
@@ -121,7 +105,7 @@
     <div id="page-create" class="page bg-gray-900">
         <div class="bg-gray-800 p-8 rounded-3xl shadow-2xl text-center max-w-sm w-full border border-gray-700">
             <h2 class="text-2xl font-bold mb-6">강의실 이름</h2>
-            <input type="text" id="create-name" placeholder="예: math" class="w-full bg-gray-700 border border-gray-600 p-4 mb-6 rounded-2xl text-white text-lg focus:outline-none focus:border-blue-500 text-center">
+            <input type="text" id="create-name" placeholder="예: class1" class="w-full bg-gray-700 border border-gray-600 p-4 mb-6 rounded-2xl text-white text-lg focus:outline-none focus:border-blue-500 text-center">
             <button onclick="startHosting()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold text-lg">방송 시작</button>
             <button onclick="goPage('home')" class="mt-6 text-gray-400 underline text-sm">뒤로가기</button>
         </div>
@@ -137,7 +121,7 @@
     </div>
 
     <!-- 3. 화상 회의실 -->
-    <div id="page-room" class="page hidden bg-black" onclick="forcePlay()">
+    <div id="page-room" class="page hidden bg-black">
         <div class="fixed top-0 left-0 right-0 p-6 flex justify-between items-center z-50">
             <div class="font-bold text-xl bg-black/50 px-4 py-2 rounded-full backdrop-blur-md">📡 <span id="display-room-name" class="text-yellow-400"></span></div>
             <button onclick="location.reload()" class="bg-red-600 hover:bg-red-700 px-6 py-2 rounded-full text-sm font-bold shadow-lg transition">종료</button>
@@ -151,19 +135,6 @@
     </div>
 
     <script>
-        // 아이폰 강제 재생
-        document.body.addEventListener('click', forcePlay);
-        document.body.addEventListener('touchstart', forcePlay);
-        function forcePlay() {
-            document.querySelectorAll('video').forEach(v => {
-                if (v.paused) {
-                    v.play().catch(() => {});
-                    const guide = v.parentElement.querySelector('.tap-guide');
-                    if(guide) guide.style.display = 'none';
-                }
-            });
-        }
-
         const pages = ['home', 'create', 'join', 'room'];
         function goPage(target) {
             pages.forEach(p => {
@@ -178,24 +149,30 @@
         let peer;
         let myStream;
 
+        // [핵심] 무료로 긁어모은 최강 STUN 서버 리스트 (우회로 확보)
         const peerConfig = {
+            debug: 2, // 에러 로그 확인용
             config: {
                 'iceServers': [
                     { url: 'stun:stun.l.google.com:19302' },
-                    { url: 'stun:stun1.l.google.com:19302' }
+                    { url: 'stun:stun1.l.google.com:19302' },
+                    { url: 'stun:stun2.l.google.com:19302' },
+                    { url: 'stun:stun3.l.google.com:19302' },
+                    { url: 'stun:stun4.l.google.com:19302' },
+                    { url: 'stun:global.stun.twilio.com:3478' }
                 ]
             }
         };
 
         async function initMedia() {
             try {
-                // [해결] 끊김 방지를 위한 화질 최적화 (데이터 다이어트)
+                // 화질 타협 (360p): 끊김 방지 및 연결 성공률 향상
                 myStream = await navigator.mediaDevices.getUserMedia({ 
                     video: { 
                         facingMode: "user",
-                        width: { ideal: 480 },  // 너비 줄임
-                        height: { ideal: 640 }, // 높이 줄임
-                        frameRate: { ideal: 15 } // 초당 프레임 줄임 (끊김 해결 핵심)
+                        width: { ideal: 480 },
+                        height: { ideal: 640 },
+                        frameRate: { ideal: 15 }
                     }, 
                     audio: true 
                 });
@@ -203,7 +180,7 @@
                 goPage('room');
                 return true;
             } catch(e) {
-                alert("카메라 권한 필수!");
+                alert("카메라 권한 실패: " + e.message);
                 return false;
             }
         }
@@ -214,7 +191,9 @@
             if(await initMedia()) {
                 document.getElementById('display-room-name').innerText = roomName;
                 document.getElementById('status-msg').innerText = "학생 기다리는 중...";
+                
                 peer = new Peer(roomName, peerConfig);
+                
                 peer.on('call', call => {
                     call.answer(myStream);
                     call.on('stream', studentStream => {
@@ -222,6 +201,8 @@
                         document.getElementById('status-msg').innerText = "학생 입장!";
                     });
                 });
+                
+                peer.on('error', err => alert("연결 오류: " + err.type));
             }
         }
 
@@ -231,15 +212,29 @@
             if(await initMedia()) {
                 document.getElementById('display-room-name').innerText = roomName;
                 document.getElementById('status-msg').innerText = "연결 시도 중...";
+                
                 peer = new Peer(null, peerConfig);
+                
                 peer.on('open', () => {
                     const call = peer.call(roomName, myStream);
+                    
                     call.on('stream', teacherStream => {
                         addVideo(teacherStream, false, 'peer-video');
                         document.getElementById('status-msg').innerText = "연결 성공!";
                     });
+                    
+                    // 3초 뒤에도 연결 안 되면 재시도 유도
+                    setTimeout(() => {
+                        if(document.getElementById('status-msg').innerText === "연결 시도 중...") {
+                            alert("연결이 지연되고 있습니다. LTE 연결이 불안정할 수 있습니다.");
+                        }
+                    }, 5000);
                 });
-                peer.on('error', () => { alert("방을 못 찾겠어요."); location.reload(); });
+                
+                peer.on('error', err => {
+                    alert("방을 찾을 수 없거나 연결 실패: " + err.type);
+                    location.reload(); 
+                });
             }
         }
 
@@ -252,32 +247,48 @@
             wrapper.className = 'video-container';
             
             const label = document.createElement('div');
-            label.className = 'label';
+            label.className = 'video-label';
             label.innerText = isMe ? "나" : "상대방";
             wrapper.appendChild(label);
             
             const video = document.createElement('video');
             video.srcObject = stream;
-            video.autoplay = true;
-            video.playsInline = true;
-            video.setAttribute('webkit-playsinline', '');
-            video.muted = false;
             
-            if(isMe) {
-                video.muted = true;
-                video.classList.add('my-video');
-            } else {
-                // 안내 문구
-                const guide = document.createElement('div');
-                guide.className = 'tap-guide';
-                guide.innerHTML = "👆 화면 터치!";
-                wrapper.appendChild(guide);
-            }
+            // [핵심 전략] 일단 소리를 끄고(Muted) 자동 재생 시도 -> 성공 확률 대폭 상승
+            video.muted = true; 
+            video.autoplay = true;
+            video.playsInline = true; // iOS 표준
+            
+            // 상태 표시 오버레이
+            const status = document.createElement('div');
+            status.className = 'status-overlay';
+            status.innerText = "영상 수신 중...";
+            if(isMe) status.style.display = 'none';
+            wrapper.appendChild(status);
+
+            video.onloadedmetadata = () => {
+                video.play().then(() => {
+                    status.style.display = 'none'; // 재생 성공 시 오버레이 제거
+                    // 상대방 영상이고, 재생에 성공했다면 소리 켜기 시도
+                    if(!isMe) {
+                        video.muted = false; // 여기서 소리 켜기
+                    }
+                }).catch(e => {
+                    console.log("자동 재생 실패, 터치 대기");
+                    status.innerText = "화면을 터치해주세요!";
+                    status.style.pointerEvents = "auto"; // 클릭 가능하게 변경
+                    status.onclick = () => {
+                        video.play();
+                        video.muted = false;
+                        status.style.display = 'none';
+                    };
+                });
+            };
+            
+            if(isMe) video.classList.add('my-video');
             
             wrapper.appendChild(video);
             document.getElementById('video-grid').appendChild(wrapper);
-            
-            video.play().catch(() => console.log("터치 대기 중"));
         }
     </script>
 </body>
